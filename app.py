@@ -1,38 +1,34 @@
-# app.py
-
 import streamlit as st
-from transformers import BertTokenizer, BertForSequenceClassification
-import torch
-import torch.nn.functional as F
+from transformers import pipeline
 
-st.set_page_config(page_title="BERT Sentiment Analysis", layout="wide")
-
-st.title("🧠 BERT-based Sentiment Analysis")
-st.write("Enter a sentence and let BERT predict the sentiment (Positive / Negative).")
-
-# Load pre-trained model and tokenizer
+# Load a Hugging Face model (change model name as needed)
 @st.cache_resource
 def load_model():
-    model_name = "nlptown/bert-base-multilingual-uncased-sentiment"
-    tokenizer = BertTokenizer.from_pretrained(model_name)
-    model = BertForSequenceClassification.from_pretrained(model_name)
-    return tokenizer, model
+    model = pipeline('sentiment-analysis')  # Change this to your desired model type
+    return model
 
-tokenizer, model = load_model()
+# Load the model
+model = load_model()
 
-# Text input
-user_input = st.text_area("Enter text:", height=100)
+# Streamlit UI
+st.title("Hugging Face Model with Streamlit")
 
-if st.button("Analyze Sentiment"):
-    if user_input.strip() == "":
-        st.warning("Please enter some text.")
-    else:
-        inputs = tokenizer(user_input, return_tensors="pt", truncation=True, padding=True)
-        with torch.no_grad():
-            outputs = model(**inputs)
-            probs = F.softmax(outputs.logits, dim=1)
-            predicted_class = torch.argmax(probs).item()
+st.write("""
+This app uses a Hugging Face model to perform sentiment analysis (or any other task you configure).
+Enter some text below and the app will provide the analysis.
+""")
 
-        labels = ["Very Negative", "Negative", "Neutral", "Positive", "Very Positive"]
-        st.markdown(f"### Prediction: {labels[predicted_class]}")
-        st.bar_chart(probs.squeeze().tolist())
+# Text input box for user to enter text
+user_input = st.text_area("Enter some text", "")
+
+# Display results
+if user_input:
+    st.subheader("Model Output")
+    result = model(user_input)
+    st.write(result)
+
+# Add some more styling (optional)
+st.sidebar.title("Settings")
+st.sidebar.write("""
+You can change the model and task type here (optional).
+""")
